@@ -35,6 +35,8 @@ from pose_utils import nms, top_down_affine_transform, udp_decode
 from tqdm import tqdm
 
 from worker_pool import WorkerPool
+from multithread_video_loader import MultithreadVideoLoader
+from multithread_video_writer import MultithreadVideoWriter
 
 try:
     from mmdet.apis import inference_detector, init_detector
@@ -192,6 +194,17 @@ def load_model(checkpoint, use_torchscript=False):
         return torch.jit.load(checkpoint)
     else:
         return torch.export.load(checkpoint).module()
+
+def video2images(video_path):
+    video_loader = MultithreadVideoLoader(video_path)
+    tmp_dir='./video_tmp_dir'
+    if os.path.exists(tmp_dir):
+        os.system('rm -rf '+tmp_dir)
+    os.makedirs(tmp_dir, exist_ok=True)
+    for i in range(len(video_loader)):
+        img=video_loader.cap()
+        cv2.imwrite(os.path.join(tmp_dir,str(i).zfill(5)+'.jpg') , img)
+    return tmp_dir
 
 
 def main():
